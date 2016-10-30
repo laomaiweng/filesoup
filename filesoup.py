@@ -17,27 +17,28 @@ TODOS:
 """
 
 
-__version__ = '0.1'
-__author__ = 'Quentin Minster'
-
-
 import os
 import hashlib
-from PyQt5.QtCore import (pyqtSignal, pyqtSlot, Qt, QDir, QObject, QRectF, QThread)
-from PyQt5.QtGui import (QBrush, QColor, QLinearGradient, QPalette)
-from PyQt5.QtWidgets import (QApplication, QFileDialog, QFormLayout, QLineEdit,
+from PyQt5.QtCore import (pyqtSignal, pyqtSlot, Qt, QDir, QObject, QRectF,          # pylint: disable=no-name-in-module
+                          QThread)
+from PyQt5.QtGui import (QBrush, QColor, QLinearGradient, QPalette)                 # pylint: disable=no-name-in-module
+from PyQt5.QtWidgets import (QApplication, QFileDialog, QFormLayout, QLineEdit,     # pylint: disable=no-name-in-module
                              QMainWindow, QMessageBox, QPushButton, QWidget)
+
+
+__version__ = '0.1'
+__author__ = 'Quentin Minster'
 
 
 ALGORITHMS_AVAILABLE = {'md5', 'sha1', 'sha256', 'sha512'} \
                        & hashlib.algorithms_available
 
 
-def read_chunk(file, chunk_size=1024):
+def read_chunk(file_, chunk_size=1024):
     """Lazy function (generator) to read a file chunk by chunk.
     Default chunk size: 1k."""
     while True:
-        data = file.read(chunk_size)
+        data = file_.read(chunk_size)
         if not data:
             break
         yield data
@@ -67,6 +68,7 @@ class FileSoupWindow(QMainWindow):
 
     def closeEvent(self, event):
         """Handle window close requests."""
+        # pylint: disable=invalid-name
         self.stopThread()
         event.accept()
 
@@ -78,6 +80,7 @@ class FileSoupWindow(QMainWindow):
     @pyqtSlot()
     def selectFile(self, path=''):
         """Select a file and start a worker thread to compute its digests."""
+        # pylint: disable=invalid-name
         # Interrupt any currently running thread
         self.stopThread()
 
@@ -109,6 +112,7 @@ class FileSoupWindow(QMainWindow):
     @pyqtSlot(str, str)
     def setDigest(self, algorithm, digest):
         """Display one of the file's digests."""
+        # pylint: disable=invalid-name
         edit = self.edits[algorithm]
         edit.setText(digest)
         edit.setMinimumWidth(edit.fontMetrics().boundingRect(digest).width())
@@ -116,6 +120,7 @@ class FileSoupWindow(QMainWindow):
     @pyqtSlot(float)
     def setProgress(self, progress):
         """Update the file digest computation progress bar."""
+        # pylint: disable=invalid-name
         rect = QRectF(self.fileedit.rect())
         gradient = QLinearGradient(rect.topLeft(), rect.topRight())
         stop = progress - self.gradient_span if self.gradient_span < progress else 0
@@ -129,6 +134,7 @@ class FileSoupWindow(QMainWindow):
 
     def setupUi(self):
         """Setup the GUI."""
+        # pylint: disable=invalid-name
         widget = QWidget(self)
         self.setCentralWidget(widget)
         layout = QFormLayout()
@@ -153,6 +159,7 @@ class FileSoupWindow(QMainWindow):
     @pyqtSlot()
     def stopThread(self):
         """Stop the worker thread, if any."""
+        # pylint: disable=invalid-name
         if self.thread is not None:
             if not self.thread.isFinished():
                 # Thread still running: tell the worker to stop gracefully
@@ -174,6 +181,7 @@ class FileSoupWindow(QMainWindow):
 
 class FileDigestWorker(QObject):
     """Worker class for computing the digests of a file."""
+    # pylint: disable=too-few-public-methods
 
     # Chunk size (in bytes) to read between digests updates
     # Large chunks (>> digest.block_size) are more efficient
@@ -200,9 +208,9 @@ class FileDigestWorker(QObject):
             digests = {hashlib.new(a) for a in self.algorithms}
             size = 0
             interval_size = 0
-            with open(self.path, 'rb') as file:
+            with open(self.path, 'rb') as file_:
                 stat = os.stat(self.path)
-                for chunk in read_chunk(file, self.chunk_size):
+                for chunk in read_chunk(file_, self.chunk_size):
                     # Update digests
                     for digest in digests:
                         digest.update(chunk)
@@ -228,7 +236,7 @@ def main():
     """Start the Qt application and GUI."""
     import sys
     app = QApplication(sys.argv)
-    win = FileSoupWindow()
+    win = FileSoupWindow()          # pylint: disable=unused-variable
     sys.exit(app.exec_())
 
 
