@@ -109,7 +109,9 @@ class FileSoupWindow(QMainWindow):
     @pyqtSlot(str, str)
     def setDigest(self, algorithm, digest):
         """Display one of the file's digests."""
-        self.edits[algorithm].setText(digest)
+        edit = self.edits[algorithm]
+        edit.setText(digest)
+        edit.setMinimumWidth(edit.fontMetrics().boundingRect(digest).width())
 
     @pyqtSlot(float)
     def setProgress(self, progress):
@@ -145,7 +147,6 @@ class FileSoupWindow(QMainWindow):
             layout.addRow('  ' + alg.upper() + '  ', edit)
             self.edits[alg] = edit
 
-        self.setFixedWidth(864)
         self.setWindowTitle('filesoup')
         self.show()
 
