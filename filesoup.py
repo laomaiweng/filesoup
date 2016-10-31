@@ -19,6 +19,7 @@ TODOS:
 
 import os
 import hashlib
+import timeit
 from PyQt5.QtCore import (pyqtSignal, pyqtSlot, Qt, QDir, QObject, QRectF,          # pylint: disable=no-name-in-module
                           QThread)
 from PyQt5.QtGui import (QBrush, QColor, QLinearGradient, QPalette)                 # pylint: disable=no-name-in-module
@@ -227,6 +228,7 @@ class FileDigestWorker(QObject):
             interval_size = 0
             with open(self.path, 'rb') as file_:
                 stat = os.stat(self.path)
+                start_time = timeit.default_timer()
                 for chunk in read_chunk(file_, self.chunk_size):
                     # Update digests
                     for digest in digests:
@@ -241,6 +243,13 @@ class FileDigestWorker(QObject):
                     if QThread.currentThread().isInterruptionRequested():
                         self.finished.emit()
                         return
+                elapsed = timeit.default_timer() - start_time
+                size_mb = stat.st_size / (1024 * 1024)
+                print('%s: %.2f MB in %.2f s (%.2f MB/s)'
+                      % (QDir.toNativeSeparators(self.path),
+                         size_mb,
+                         elapsed,
+                         size_mb / elapsed))
             # Display digests
             self.progress.emit(1)
             for digest in digests:
