@@ -115,7 +115,10 @@ class FileSoupWindow(QMainWindow):
         # pylint: disable=invalid-name
         edit = self.edits[algorithm]
         edit.setText(digest)
-        edit.setMinimumWidth(edit.fontMetrics().boundingRect(digest).width())
+        # Adjust the width so that the digest fits
+        # (+10 for Windows where the bounding rect width isn't quite enough)
+        width = edit.fontMetrics().boundingRect(digest).width()
+        edit.setMinimumWidth(width + 10)
 
     @pyqtSlot(float)
     def setProgress(self, progress):
@@ -123,10 +126,16 @@ class FileSoupWindow(QMainWindow):
         # pylint: disable=invalid-name
         rect = QRectF(self.fileedit.rect())
         gradient = QLinearGradient(rect.topLeft(), rect.topRight())
-        stop = progress - self.gradient_span if self.gradient_span < progress else 0
+        if self.gradient_span < progress:
+            stop = progress - self.gradient_span
+        else:
+            stop = 0
         gradient.setColorAt(stop, QColor(self.gradient_color))
         gradient.setColorAt(progress, self.fileeditbase)
-        stop = progress + self.gradient_span if progress < 1 - self.gradient_span else 1
+        if progress < 1 - self.gradient_span:
+            stop = progress + self.gradient_span
+        else:
+            stop = 1
         gradient.setColorAt(stop, self.fileeditbase)
         palette = self.fileedit.palette()
         palette.setBrush(QPalette.Base, QBrush(gradient))
@@ -135,23 +144,31 @@ class FileSoupWindow(QMainWindow):
     def setupUi(self):
         """Setup the GUI."""
         # pylint: disable=invalid-name
+        # Window layout
         widget = QWidget(self)
         self.setCentralWidget(widget)
         layout = QFormLayout()
         layout.setLabelAlignment(Qt.AlignRight)
         widget.setLayout(layout)
 
+        # File row
         self.filebutton = QPushButton('File', widget)
         self.filebutton.clicked.connect(self.selectFile)
         self.fileedit = QLineEdit(widget)
         self.fileedit.setReadOnly(True)
         self.fileeditbase = self.fileedit.palette().base().color()
         layout.addRow(self.filebutton, self.fileedit)
+
+        # Digest rows
         for alg in sorted(ALGORITHMS_AVAILABLE):
             edit = QLineEdit(widget)
             edit.setReadOnly(True)
             layout.addRow('  ' + alg.upper() + '  ', edit)
             self.edits[alg] = edit
+            # Let setDigest() adjust the width of each row
+            digest = hashlib.new(alg)
+            self.setDigest(alg, '0' * len(digest.hexdigest()))
+            edit.setText('')
 
         self.setWindowTitle('filesoup')
         self.show()
