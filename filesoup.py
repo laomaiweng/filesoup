@@ -20,8 +20,8 @@ TODOS:
 import os
 import hashlib
 import timeit
-from PyQt5.QtCore import (pyqtSignal, pyqtSlot, Qt, QDir, QObject, QRectF,          # pylint: disable=no-name-in-module
-                          QThread)
+from PyQt5.QtCore import (pyqtSignal, pyqtSlot, Qt, QDir, QFileInfo, QObject,       # pylint: disable=no-name-in-module
+                          QRectF, QThread)
 from PyQt5.QtGui import (QBrush, QColor, QLinearGradient, QPalette)                 # pylint: disable=no-name-in-module
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QFormLayout, QLineEdit,     # pylint: disable=no-name-in-module
                              QMainWindow, QMessageBox, QPushButton, QWidget)
@@ -66,6 +66,10 @@ class FileSoupWindow(QMainWindow):
         self.worker = None
         self.thread = None
         self.setupUi()
+        # Process the first file provided on the command line, if any
+        args = QApplication.arguments()
+        if len(args) >= 2:
+            self.selectFile(QFileInfo(args[1]).canonicalFilePath())
 
     def closeEvent(self, event):
         """Handle window close requests."""
@@ -79,14 +83,15 @@ class FileSoupWindow(QMainWindow):
         QMessageBox.critical(self, 'filesoup', message)
 
     @pyqtSlot()
-    def selectFile(self, path=''):
+    def selectFile(self, path=None):
         """Select a file and start a worker thread to compute its digests."""
         # pylint: disable=invalid-name
         # Interrupt any currently running thread
         self.stopThread()
 
         # Get file to process
-        (path, _) = QFileDialog.getOpenFileName(self)     # getOpenFileName() returns a tuple
+        if path is None:
+            (path, _) = QFileDialog.getOpenFileName(self)     # getOpenFileName() returns a tuple
         if path == '':
             return
         self.fileedit.setText(QDir.toNativeSeparators(path))
