@@ -77,6 +77,19 @@ class FileSoupWindow(QMainWindow):
         self.stopThread()
         event.accept()
 
+    def dragEnterEvent(self, event):
+        """Handle window drag enter events."""
+        #pylint: disable=invalid-name,no-self-use
+        if event.mimeData().hasUrls() and event.mimeData().urls()[0].isLocalFile():
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event):
+        """Handle window drop events."""
+        #pylint: disable=invalid-name,no-self-use
+        self.selectFile(event.mimeData().urls()[0].toLocalFile())
+
     @pyqtSlot(str)
     def error(self, message):
         """Display error messages from the worker."""
@@ -176,6 +189,7 @@ class FileSoupWindow(QMainWindow):
             self.setDigest(alg, '0' * len(digest.hexdigest()))
             edit.setText('')
 
+        self.setAcceptDrops(True)
         self.setWindowTitle('filesoup')
         self.show()
 
