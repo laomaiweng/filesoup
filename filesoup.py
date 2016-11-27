@@ -11,7 +11,8 @@ Requires:
   PyQt5
 
 TODOS:
-* Check digests against user-provided digest
+* Friendlier way of checking digests against user-provided digest
+  (color matched digest in green?)
 * Hash multiple files
 * Export digests to file
 """
@@ -22,12 +23,13 @@ import hashlib
 import timeit
 from PyQt5.QtCore import (pyqtSignal, pyqtSlot, Qt, QDir, QFileInfo, QObject,       # pylint: disable=no-name-in-module
                           QRectF, QThread)
-from PyQt5.QtGui import (QBrush, QColor, QLinearGradient, QPalette)                 # pylint: disable=no-name-in-module
+from PyQt5.QtGui import (QBrush, QColor, QKeySequence, QLinearGradient,             # pylint: disable=no-name-in-module
+                          QPalette)
 from PyQt5.QtWidgets import (QApplication, QFileDialog, QFormLayout, QLineEdit,     # pylint: disable=no-name-in-module
                              QMainWindow, QMessageBox, QPushButton, QWidget)
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 __author__ = 'Quentin Minster'
 
 
@@ -78,7 +80,7 @@ class FileSoupWindow(QMainWindow):
         event.accept()
 
     def dragEnterEvent(self, event):
-        """Handle window drag enter events."""
+        """Handle file drag enter events."""
         #pylint: disable=invalid-name,no-self-use
         if event.mimeData().hasUrls() and event.mimeData().urls()[0].isLocalFile():
             event.accept()
@@ -86,14 +88,46 @@ class FileSoupWindow(QMainWindow):
             event.ignore()
 
     def dropEvent(self, event):
-        """Handle window drop events."""
+        """Handle file drop events."""
         #pylint: disable=invalid-name,no-self-use
+        event.accept()
         self.selectFile(event.mimeData().urls()[0].toLocalFile())
 
     @pyqtSlot(str)
     def error(self, message):
         """Display error messages from the worker."""
         QMessageBox.critical(self, 'filesoup', message)
+
+    def keyReleaseEvent(self, event):
+        """
+        Handle key release events:
+        * QKeySequence.Paste: check clipboard text against computed digests
+        """
+        #pylint: disable=invalid-name
+        if event.matches(QKeySequence.Paste):
+            event.accept()
+            text = QApplication.clipboard().text()
+            if len(text) > 0:
+                matched = []
+                empty = True
+                for alg in sorted(ALGORITHMS_AVAILABLE):
+                    if text.lower() == self.edits[alg].text():
+                        matched.append(alg)
+                    empty &= (len(self.edits[alg].text()) == 0)
+                if empty is False:
+                    if len(matched) == 0:
+                        QMessageBox.information(self, 'filesoup',
+                                                'No match for provided hash.')
+                    elif len(matched) == 1:
+                        QMessageBox.information(self, 'filesoup',
+                                                'Hash match: '
+                                                + matched[0].upper())
+                    else:
+                        QMessageBox.critical(self, 'filesoup',
+                                             'Multiple hash match: %s'
+                                             % ", ".join(matched))
+        else:
+            event.ignore()
 
     @pyqtSlot()
     def selectFile(self, path=None):
