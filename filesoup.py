@@ -59,7 +59,7 @@ class FileSoupWindow(QMainWindow):
     # Progress bar color
     gradient_color = '#f99e41'
 
-    def __init__(self, parent=None):
+    def __init__(self, file_=None, parent=None):
         super(FileSoupWindow, self).__init__(parent)
         self.filebutton = None
         self.fileedit = None
@@ -68,10 +68,9 @@ class FileSoupWindow(QMainWindow):
         self.worker = None
         self.thread = None
         self.setupUi()
-        # Process the first file provided on the command line, if any
-        args = QApplication.arguments()
-        if len(args) >= 2:
-            self.selectFile(QFileInfo(args[1]).canonicalFilePath())
+        # Process the provided file, if any
+        if file_ is not None:
+            self.selectFile(QFileInfo(file_).canonicalFilePath())
 
     def closeEvent(self, event):
         """Handle window close requests."""
@@ -315,7 +314,10 @@ def main():
     """Start the Qt application and GUI."""
     import sys
     app = QApplication(sys.argv)
-    win = FileSoupWindow()          # pylint: disable=unused-variable
+    # Spawn a window per file
+    wins = []
+    for arg in QApplication.arguments()[1:]:
+        wins.append(FileSoupWindow(arg))
     sys.exit(app.exec_())
 
 
