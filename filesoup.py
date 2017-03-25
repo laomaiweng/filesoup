@@ -105,12 +105,12 @@ class FileSoupWindow(QMainWindow):
         #pylint: disable=invalid-name
         if event.matches(QKeySequence.Paste):
             event.accept()
-            text = QApplication.clipboard().text()
+            text = QApplication.clipboard().text().lower().strip()
             if len(text) > 0:
                 matched = []
                 empty = True
                 for alg in sorted(ALGORITHMS_AVAILABLE):
-                    if text.lower() == self.edits[alg].text():
+                    if text == self.edits[alg].text():
                         matched.append(alg)
                     empty &= (len(self.edits[alg].text()) == 0)
                 if empty is False:
