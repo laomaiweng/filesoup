@@ -11,8 +11,6 @@ Requires:
   PyQt5
 
 TODOS:
-* Friendlier way of checking digests against user-provided digest
-  (color matched digest in green?)
 * Hash multiple files
 * Export digests to file
 """
@@ -29,7 +27,7 @@ from PyQt5.QtWidgets import (QApplication, QFileDialog, QFormLayout, QLineEdit, 
                              QMainWindow, QMessageBox, QPushButton, QWidget)
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __author__ = 'Quentin Minster'
 
 
@@ -58,6 +56,9 @@ class FileSoupWindow(QMainWindow):
     gradient_span = 0.001
     # Progress bar color
     gradient_color = '#f99e41'
+    # Hash match colors
+    nomatch_color = QColor(255,0,0,42) # Qt.red + alpha
+    match_color = QColor(0,255,0,42) # Qt.green + alpha
 
     def __init__(self, file_=None, parent=None):
         super(FileSoupWindow, self).__init__(parent)
@@ -110,9 +111,15 @@ class FileSoupWindow(QMainWindow):
                 matched = []
                 empty = True
                 for alg in sorted(ALGORITHMS_AVAILABLE):
-                    if text == self.edits[alg].text():
+                    edit = self.edits[alg]
+                    palette = edit.palette()
+                    if text == edit.text():
                         matched.append(alg)
-                    empty &= (len(self.edits[alg].text()) == 0)
+                        palette.setColor(QPalette.Base, self.match_color)
+                    elif len(text) == len(edit.text()):
+                        palette.setColor(QPalette.Base, self.nomatch_color)
+                    edit.setPalette(palette)
+                    empty &= (len(edit.text()) == 0)
                 if empty is False:
                     if len(matched) == 0:
                         QMessageBox.information(self, 'filesoup',
