@@ -318,7 +318,10 @@ def main():
     wins = []
     for arg in QApplication.arguments()[1:]:
         wins.append(FileSoupWindow(arg))
-    sys.exit(app.exec_())
+    ret = 0
+    if len(wins):
+        ret = app.exec_()
+    sys.exit(ret)
 
 
 if __name__ == '__main__':
