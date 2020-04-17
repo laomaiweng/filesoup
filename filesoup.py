@@ -112,13 +112,16 @@ class FileSoupWindow(QMainWindow):
                 empty = True
                 for alg in sorted(ALGORITHMS_AVAILABLE):
                     edit = self.edits[alg]
-                    palette = edit.palette()
+                    color = QColor()
                     if text == edit.text():
                         matched.append(alg)
-                        palette.setColor(QPalette.Base, self.match_color)
+                        color = self.match_color
                     elif len(text) == len(edit.text()):
-                        palette.setColor(QPalette.Base, self.nomatch_color)
-                    edit.setPalette(palette)
+                        color = self.nomatch_color
+                    if color.isValid():
+                        palette = QPalette()
+                        palette.setColor(QPalette.Base, color)
+                        edit.setPalette(palette)
                     empty &= (len(edit.text()) == 0)
                 if empty is False:
                     if len(matched) == 0:
@@ -150,6 +153,7 @@ class FileSoupWindow(QMainWindow):
         self.fileedit.setText(QDir.toNativeSeparators(path))
         for edit in self.edits.values():
             edit.setText('')
+            edit.setPalette(QApplication.palette(edit))
 
         # Create worker and run it in a separate thread
         # A note on signals:
